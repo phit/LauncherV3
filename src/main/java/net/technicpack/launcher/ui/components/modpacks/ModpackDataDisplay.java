@@ -67,7 +67,7 @@ public class ModpackDataDisplay extends JPanel implements IImageJobListener<Modp
         this.packSiteUrl = modpack.getWebSite();
 
         if (this.packSiteUrl == null)
-            this.packSiteUrl = "http://beta.technicpack.net/";
+            this.packSiteUrl = "http://technicpack.net/";
 
         titleLabel.setText(resources.getString("launcher.packstats.title", modpack.getDisplayName()));
         description.setText(modpack.getDescription());

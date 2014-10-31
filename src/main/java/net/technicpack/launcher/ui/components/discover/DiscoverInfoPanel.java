@@ -42,7 +42,7 @@ public class DiscoverInfoPanel extends TiledBackground {
         super(loader.getImage("background_repeat2.png"));
 
         if (discoverUrl == null)
-            discoverUrl = "http://beta.technicpack.net/api/discover/";
+            discoverUrl = "http://technicpack.net/api/discover/";
 
         final String runnableAccessDiscover = discoverUrl;
 
