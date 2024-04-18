@@ -38,7 +38,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
 public class MojangAuthenticator {
-    private static final String AUTH_SERVER = "https://authserver.mojang.com/";
+    private static final String AUTH_SERVER = "https://sessionserver.mojang.com/";
     private final String clientToken;
 
     public MojangAuthenticator(String clientToken) {

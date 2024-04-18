@@ -98,6 +98,8 @@ public class HandleVersionFileTask implements IInstallTask {
             version.setMainClass("net.technicpack.legacywrapper.Launch");
         }
 
+        final boolean hasNeoForge = MojangUtils.hasNeoForge(version);
+
         // In Forge 1.13+ and 1.12.2 > 2847, there's an installer jar, and the universal jar can't be used since it
         // doesn't have the required dependencies to actually launch the game.
         // So, for Forge 1.13+ we need to use ForgeWrapper to install Forge (it performs deobfuscation at install time).
@@ -150,9 +152,9 @@ public class HandleVersionFileTask implements IInstallTask {
             if (!is1_12_2) {
                 Library forgeWrapper = new Library(
                         "io.github.zekerzhayard:ForgeWrapper:1.5.6",
-                        TechnicConstants.technicLibRepo + "io/github/zekerzhayard/ForgeWrapper/1.5.6/ForgeWrapper-1.5.6.jar",
-                        "b38d28e8b7fde13b1bc0db946a2da6760fecf98d",
-                        34715
+                        "https://phit.link/s/ForgeWrapper-1.6.0-LOCAL.jar",
+                        "dc9db06d59d513d8224e0bf0fd72a9c0f73a2adf",
+                        28659
                 );
 
                 version.addLibrary(forgeWrapper);
@@ -172,6 +174,55 @@ public class HandleVersionFileTask implements IInstallTask {
                     }
                 }
             }
+        } else if (hasNeoForge) {
+            File profileJson = new File(pack.getBinDir(), "install_profile.json");
+            ZipFileRetriever zipVersionRetriever = new ZipFileRetriever(new File(pack.getBinDir(), "modpack.jar"));
+            MojangVersion installerVersion = new FileVersionBuilder(profileJson, zipVersionRetriever, null).buildVersionFromKey("install_profile");
+
+            for (Library library : installerVersion.getLibrariesForOS()) {
+                if (library.isForge()) {
+
+                }
+
+                // For Forge 1.13+, the URL for the universal jar isn't set, so we set one here
+                if (library.getGradleGroup().equals("net.neoforged")
+                        && library.getGradleArtifact().equals("neoforge")
+                        && library.getGradleClassifier().equals("universal")) {
+                    Downloads downloads = library.getDownloads();
+                    Artifact artifact = downloads.getArtifact();
+                    artifact.setUrl("https://maven.neoforged.net/releases/" + library.getArtifactPath());
+
+                    checkLibraryQueue.addTask(new InstallVersionLibTask(library, checkNonMavenLibsQueue, downloadLibraryQueue, copyLibraryQueue, pack, directories));
+                    continue;
+                }
+
+                checkLibraryQueue.addTask(new InstallVersionLibTask(library, checkNonMavenLibsQueue, downloadLibraryQueue, copyLibraryQueue, pack, directories));
+            }
+
+            Library forgeWrapper = new Library(
+                    "io.github.zekerzhayard:ForgeWrapper:1.6.0",
+                    "https://phit.link/s/ForgeWrapper-1.6.0-LOCAL.jar",
+                    "dc9db06d59d513d8224e0bf0fd72a9c0f73a2adf",
+                    28659
+            );
+
+            version.addLibrary(forgeWrapper);
+
+            version.setMainClass("io.github.zekerzhayard.forgewrapper.installer.Main");
+
+            for (Library library : version.getLibrariesForOS()) {
+                // This is for Forge 1.13+, up to 1.17 (not inclusive)
+                if (library.getName().startsWith("net.neoforged:neoforge:")) {
+                    // Correct the classifier and URL
+                    library.setName(library.getName() + ":launcher");
+                    library.setUrl("https://maven.neoforged.net/releases/");
+
+                    checkLibraryQueue.addTask(new InstallVersionLibTask(library, checkNonMavenLibsQueue, downloadLibraryQueue, copyLibraryQueue, pack, directories));
+
+                    break;
+                }
+            }
+
         }
 
         for (Library library : version.getLibrariesForOS()) {
